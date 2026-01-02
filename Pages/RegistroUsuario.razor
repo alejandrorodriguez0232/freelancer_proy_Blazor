@@ -1,0 +1,163 @@
+@page "/registro-usuario"
+@using BlazorRegistroUsuarios.Data.Models
+@using BlazorRegistroUsuarios.Services
+@attribute [Authorize(Roles = "Administrador")]
+@inject NavigationManager Navigation
+@inject IUsuarioService UsuarioService
+
+<h3>Registro de Nuevo Usuario Registrador</h3>
+
+<EditForm Model="@usuario" OnValidSubmit="@HandleSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary class="text-danger mb-3" />
+
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label for="numeroDocumento" class="form-label">Número de Documento *</label>
+            <InputText id="numeroDocumento" @bind-Value="usuario.NumeroDocumento" 
+                      class="form-control" maxlength="12" />
+            <ValidationMessage For="@(() => usuario.NumeroDocumento)" />
+            @if (documentoError)
+            {
+                <small class="text-danger">Este documento ya está registrado</small>
+            }
+        </div>
+
+        <div class="col-md-6 mb-3">
+            <label for="nombres" class="form-label">Nombres *</label>
+            <InputText id="nombres" @bind-Value="usuario.Nombres" class="form-control" />
+            <ValidationMessage For="@(() => usuario.Nombres)" />
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label for="apellidos" class="form-label">Apellidos *</label>
+            <InputText id="apellidos" @bind-Value="usuario.Apellidos" class="form-control" />
+            <ValidationMessage For="@(() => usuario.Apellidos)" />
+        </div>
+
+        <div class="col-md-6 mb-3">
+            <label for="correo" class="form-label">Correo Electrónico *</label>
+            <InputText id="correo" @bind-Value="usuario.Correo" class="form-control" />
+            <ValidationMessage For="@(() => usuario.Correo)" />
+            @if (correoError)
+            {
+                <small class="text-danger">Este correo ya está registrado</small>
+            }
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label for="clave" class="form-label">Contraseña *</label>
+            <InputText id="clave" type="password" @bind-Value="usuario.Clave" class="form-control" />
+            <ValidationMessage For="@(() => usuario.Clave)" />
+        </div>
+
+        <div class="col-md-6 mb-3">
+            <label for="permiso" class="form-label">Permiso *</label>
+            <InputSelect id="permiso" @bind-Value="usuario.Permiso" class="form-control">
+                <option value="Registrador">Registrador</option>
+                <option value="Administrador">Administrador</option>
+            </InputSelect>
+            <ValidationMessage For="@(() => usuario.Permiso)" />
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4 mb-3">
+            <div class="form-check">
+                <InputCheckbox id="trabaja" @bind-Value="usuario.Trabaja" class="form-check-input" />
+                <label for="trabaja" class="form-check-label">¿Trabaja?</label>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <div class="form-check">
+                <InputCheckbox id="activo" @bind-Value="usuario.Activo" class="form-check-input" />
+                <label for="activo" class="form-check-label">¿Activo?</label>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <button type="submit" class="btn btn-primary me-2" disabled="@isLoading">
+            @if (isLoading)
+            {
+                <span class="spinner-border spinner-border-sm me-2"></span>
+            }
+            Guardar Usuario
+        </button>
+        <button type="button" class="btn btn-secondary" @onclick="Cancelar">Cancelar</button>
+    </div>
+</EditForm>
+
+@if (!string.IsNullOrEmpty(mensajeExito))
+{
+    <div class="alert alert-success mt-3">@mensajeExito</div>
+}
+
+@if (!string.IsNullOrEmpty(mensajeError))
+{
+    <div class="alert alert-danger mt-3">@mensajeError</div>
+}
+
+@code {
+    private UsuarioRegistrador usuario = new();
+    private bool isLoading = false;
+    private bool documentoError = false;
+    private bool correoError = false;
+    private string mensajeExito = string.Empty;
+    private string mensajeError = string.Empty;
+
+    private async Task HandleSubmit()
+    {
+        isLoading = true;
+        documentoError = false;
+        correoError = false;
+        mensajeExito = string.Empty;
+        mensajeError = string.Empty;
+
+        try
+        {
+            // Validaciones adicionales
+            if (await UsuarioService.ExisteDocumentoAsync(usuario.NumeroDocumento))
+            {
+                documentoError = true;
+                throw new Exception("El número de documento ya está registrado");
+            }
+
+            if (await UsuarioService.ExisteCorreoAsync(usuario.Correo))
+            {
+                correoError = true;
+                throw new Exception("El correo electrónico ya está registrado");
+            }
+
+            var resultado = await UsuarioService.CrearAsync(usuario);
+
+            if (resultado)
+            {
+                mensajeExito = "Usuario registrado exitosamente";
+                usuario = new UsuarioRegistrador(); // Limpiar formulario
+            }
+            else
+            {
+                mensajeError = "Error al guardar el usuario";
+            }
+        }
+        catch (Exception ex)
+        {
+            mensajeError = ex.Message;
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void Cancelar()
+    {
+        Navigation.NavigateTo("/lista-usuarios");
+    }
+}

@@ -1,0 +1,35 @@
+# Archivos de compilación
+bin/
+obj/
+
+# Archivos de usuario
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Archivos de VS Code
+.vscode/
+
+# Archivos de Rider
+.idea/
+
+# Archivos de paquetes NuGet
+.nuget/
+*.nupkg
+
+# Archivos de salida
+out/
+
+# Archivos de configuración local
+appsettings.Development.json
+appsettings.Local.json
+
+# Archivos de base de datos
+*.mdf
+*.ldf
+
+# Archivos de depuración
+*.pdb
+*.backup.*
+*.backup

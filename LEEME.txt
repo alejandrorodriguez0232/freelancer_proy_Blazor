@@ -1,0 +1,183 @@
+# Create project and navigate to it
+dotnet new blazorserver -n BlazorRegistroUsuarios
+cd BlazorRegistroUsuarios
+
+# Add required NuGet packages
+dotnet add package Microsoft.EntityFrameworkCore.SqlServer
+dotnet add package Microsoft.EntityFrameworkCore.Tools
+dotnet add package QuestPDF
+dotnet add package BCrypt.Net-Next
+dotnet add package Microsoft.AspNetCore.Identity.EntityFrameworkCore
+
+# Create directories
+mkdir -p Data/Models Services Shared/Components wwwroot/css -- no funciona, aplicar
+
+---
+
+# Create each directory one by one
+mkdir -Force Data\Models, Services, Shared\Components, wwwroot\css
+
+o
+
+# Create each directory one by one
+mkdir -Force Data\Models
+mkdir -Force Services
+mkdir -Force Shared\Components
+mkdir -Force wwwroot\css
+
+After running either of these commands, you can verify the directory structure was created with:
+
+powershell
+Get-ChildItem -Recurse -Directory
+
+
+----
+
+
+# Navegar al directorio del proyecto
+cd C:\Users\Luis\Desktop\proyecto_blazor\BlazorRegistroUsuarios
+
+# Agregar los paquetes necesarios
+dotnet add package Microsoft.EntityFrameworkCore.SqlServer
+dotnet add package Microsoft.EntityFrameworkCore.Tools
+dotnet add package QuestPDF
+dotnet add package BCrypt.Net-Next
+dotnet add package Microsoft.AspNetCore.Identity.EntityFrameworkCore
+dotnet add package Microsoft.AspNetCore.Components.Authorization
+
+
+--nota: Si los errores persisten, también necesitamos asegurarnos de que el archivo de proyecto tenga las referencias correctas. Crea o verifica el 
+archivo BlazorRegistroUsuarios.csproj 
+en el directorio raíz del proyecto
+
+
+esta es el codigo: 
+
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.Authorization" Version="8.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="QuestPDF" Version="2023.12.0" />
+  </ItemGroup>
+
+</Project>
+
+
+--
+Intenta restaurar los paquetes con un origen de NuGet alternativo
+
+dotnet restore --source https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet8/nuget/v3/index.json --source https://api.nuget.org/v3/index.json
+
+
+***¡Perfecto! Vamos a verificar la estructura de carpetas del proyecto usando PowerShell. Ejecuta este comando:
+
+**powershell
+Get-ChildItem -Recurse | Select-Object FullName
+
+O, si prefieres ver la estructura de forma jerárquica:
+
+**powershell
+
+Get-ChildItem -Recurse | ForEach-Object { $indent = ("  " * ($_.FullName.Split('\').Count - 1)); Write-Host "$indent$($_.Name)" }
+
+***Limpia la caché de NuGet
+
+dotnet nuget locals all --clear
+
+
+Despues de haber depurado el codigo:
+
+dotnet restore --solo una vez
+
+dotnet clean
+dotnet build
+dotnet run
+
+nota: para renombarr
+
+ren wwwroot\index.html index.html.bak
+
+
+-----***MIGRACIONES
+
+Perfecto! Vamos a solucionar esto paso a paso. Primero, necesitamos instalar las herramientas de Entity Framework Core. Aqu están los pasos:
+
+Instala las herramientas de EF Core:
+
+dotnet tool install --global dotnet-ef
+
+Instala los paquetes de EF Core en tu proyecto:
+
+dotnet add package Microsoft.EntityFrameworkCore.Design
+dotnet add package Microsoft.EntityFrameworkCore.SqlServer
+
+Crea una migración:
+
+dotnet ef migrations add InitialCreate
+
+
+Aplica las migraciones para crear la base de datos:
+
+dotnet ef database update
+
+---
+Si el error persiste, elimina la base de datos existente y vuelve a crearla:
+
+sqlcmd -S "(localdb)\MSSQLLocalDB" -Q "DROP DATABASE [BlazorRegistroUsuariosDB]"
+dotnet ef database update
+
+5. Verifica la conexión en appsettings.json:
+
+"ConnectionStrings": {
+    "DefaultConnection": "Server=(localdb)\\mssqllocaldb;Database=BlazorRegistroUsuariosDB;Trusted_Connection=True;MultipleActiveResultSets=true"
+}
+
+
+--Asegúrate de que la base de datos existe
+
+sqlcmd -S "(localdb)\MSSQLLocalDB" -Q "SELECT name FROM sys.databases"
+
+
+Step 5: Access the Application
+Open your browser and navigate to https://localhost:5001
+
+Default Admin Credentials:
+
+Email: admin@sistema.com
+Password: Admin123
+Features
+User Authentication
+Secure login with email and password
+Role-based authorization (Admin/Registrador)
+Secure password hashing with BCrypt
+User Management
+Create new users with validation
+List all users with filtering
+Admin-only access to user management
+PDF Reporting
+Generate PDF reports using QuestPDF
+Download reports with user data
+Data Validation
+Frontend and backend validation
+12-character document number requirement
+Email format validation
+Required field validation
+Database
+SQL Server with Entity Framework Core
+Automatic database migration
+Seed data for admin user
+The application is now ready to use! You can log in with the default admin credentials and start managing users. 
+The PDF generation feature allows you to download reports of the user list._

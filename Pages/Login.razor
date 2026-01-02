@@ -1,0 +1,102 @@
+@page "/login"
+@using BlazorRegistroUsuarios.Services
+@using System.ComponentModel.DataAnnotations
+@inject NavigationManager Navigation
+@inject IAuthService AuthService
+@inject IUsuarioService UsuarioService
+@inject AuthenticationStateProvider AuthStateProvider
+
+<div class="login-container">
+    <div class="login-card">
+        <h3 class="text-center mb-4">Iniciar Sesión</h3>
+
+        <EditForm Model="@loginModel" OnValidSubmit="@HandleLogin">
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger" />
+
+            <div class="form-group mb-3">
+                <label for="correo">Correo Electrónico</label>
+                <InputText id="correo" @bind-Value="loginModel.Correo" class="form-control" />
+                <ValidationMessage For="@(() => loginModel.Correo)" />
+            </div>
+
+            <div class="form-group mb-4">
+                <label for="clave">Contraseña</label>
+                <InputText id="clave" type="password" @bind-Value="loginModel.Clave" class="form-control" />
+                <ValidationMessage For="@(() => loginModel.Clave)" />
+            </div>
+
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div class="alert alert-danger">@errorMessage</div>
+            }
+
+            <button type="submit" class="btn btn-primary w-100" disabled="@isLoading">
+                @if (isLoading)
+                {
+                    <span class="spinner-border spinner-border-sm me-2"></span>
+                }
+                Iniciar Sesión
+            </button>
+        </EditForm>
+
+        <div class="text-center mt-3">
+            <small>Credenciales por defecto: admin@sistema.com / Admin123</small>
+        </div>
+    </div>
+</div>
+
+@code {
+    private LoginModel loginModel = new();
+    private string errorMessage = string.Empty;
+    private bool isLoading = false;
+
+    private class LoginModel
+    {
+        [Required(ErrorMessage = "El correo es obligatorio")]
+        [EmailAddress(ErrorMessage = "Formato de correo inválido")]
+        public string Correo { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "La contraseña es obligatoria")]
+        public string Clave { get; set; } = string.Empty;
+    }
+
+    private async Task HandleLogin()
+    {
+        isLoading = true;
+        errorMessage = string.Empty;
+
+        try
+        {
+            var usuario = await AuthService.LoginAsync(loginModel.Correo, loginModel.Clave);
+
+            if (usuario != null)
+            {
+                if (await AuthService.EsAdministrador(usuario.Correo))
+                {
+                    // Set authentication state
+                    var authState = (CustomAuthStateProvider)AuthStateProvider;
+                    await authState.UpdateAuthenticationState(usuario);
+                    
+                    Navigation.NavigateTo("/lista-usuarios", forceLoad: true);
+                }
+                else
+                {
+                    errorMessage = "Solo los administradores pueden acceder al sistema";
+                }
+            }
+            else
+            {
+                errorMessage = "Correo o contraseña incorrectos";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}
